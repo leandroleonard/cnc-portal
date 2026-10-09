@@ -80,7 +80,7 @@ export function PageHero({
     <section className="page-hero">
       <Container>
         <p className="eyebrow eyebrow--gold">{eyebrow}</p>
-        <h1>{title}</h1>
+        {/* <h1>{title}</h1> */}
         <p>{body}</p>
         {children}
       </Container>
