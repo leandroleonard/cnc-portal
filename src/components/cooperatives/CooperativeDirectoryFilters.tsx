@@ -17,7 +17,7 @@ export function CooperativeDirectoryFilters({
   municipalities: Municipality[];
   activities: Activity[];
   facets: CooperativeFacets | null;
-  initial: { search?: string; province?: string; municipality?: string; activity?: string; status?: string; };
+  initial: { search?: string; province?: string; municipality?: string; activity?: string; status?: string; type?: string };
 }) {
   const t = useTranslations('pages.cooperatives');
   const locale = useLocale() as Locale;
@@ -27,6 +27,7 @@ export function CooperativeDirectoryFilters({
   const [municipality, setMunicipality] = useState(initial.municipality ?? '');
   const [activity, setActivity] = useState(initial.activity ?? '');
   const [status, setStatus] = useState(initial.status ?? '');
+  const [type, setType] = useState(initial.type ?? '');
 
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -36,11 +37,12 @@ export function CooperativeDirectoryFilters({
     if (municipality) query[locale === 'pt' ? 'municipio' : 'municipality'] = municipality;
     if (activity) query[locale === 'pt' ? 'actividade' : 'activity'] = activity;
     if (status) query[locale === 'pt' ? 'estado' : 'status'] = status;
+    if (type) query[locale === 'pt' ? 'tipo' : 'type'] = type;
     router.push({ pathname: '/cooperativas', query });
   }
 
   function clear() {
-    setSearch(''); setProvince(''); setMunicipality(''); setActivity(''); setStatus('');
+    setSearch(''); setProvince(''); setMunicipality(''); setActivity(''); setStatus(''); setType('');
     router.push('/cooperativas');
   }
 

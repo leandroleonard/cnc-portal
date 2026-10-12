@@ -73,7 +73,7 @@ export default async function CooperativesPage({ params, searchParams }: PagePro
               <div><strong>{result ? `${result.meta.total} ${t('found').toLowerCase()}` : t('title')}</strong><small>{result ? `${common('page', { current: result.meta.currentPage, total: Math.max(result.meta.lastPage, 1) })}` : common('officialPending')}</small></div>
               <div className="view-switch" role="group" aria-label={t('sort')}>
                 <a className={view === 'list' ? 'active' : ''} href={`?${new URLSearchParams(Object.entries({ ...pageQuery, view: undefined }).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]))}`}><Building2 size={16} aria-hidden="true" /> {t('list')}</a>
-                <a className={view === 'map' ? 'active' : ''} href={`?${new URLSearchParams(Object.entries({ ...pageQuery, view: 'mapa' }).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]))}`}><Map size={16} aria-hidden="true" /> {t('map')}</a>
+                {/* <a className={view === 'map' ? 'active' : ''} href={`?${new URLSearchParams(Object.entries({ ...pageQuery, view: 'mapa' }).filter(([, value]) => value !== undefined).map(([key, value]) => [key, String(value)]))}`}><Map size={16} aria-hidden="true" /> {t('map')}</a> */}
                 <form method="get" className="sort-form">
                   {Object.entries(pageQuery).filter(([key, value]) => key !== 'view' && value !== undefined).map(([key, value]) => <input key={key} type="hidden" name={key} value={String(value)} />)}
                   <label className="sr-only" htmlFor="cooperative-sort">{t('sort')}</label>
