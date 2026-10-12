@@ -17,7 +17,7 @@ export function CooperativeDirectoryFilters({
   municipalities: Municipality[];
   activities: Activity[];
   facets: CooperativeFacets | null;
-  initial: { search?: string; province?: string; municipality?: string; activity?: string; status?: string; type?: string };
+  initial: { search?: string; province?: string; municipality?: string; activity?: string; status?: string; };
 }) {
   const t = useTranslations('pages.cooperatives');
   const locale = useLocale() as Locale;
@@ -27,7 +27,6 @@ export function CooperativeDirectoryFilters({
   const [municipality, setMunicipality] = useState(initial.municipality ?? '');
   const [activity, setActivity] = useState(initial.activity ?? '');
   const [status, setStatus] = useState(initial.status ?? '');
-  const [type, setType] = useState(initial.type ?? '');
 
   function apply(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -37,12 +36,11 @@ export function CooperativeDirectoryFilters({
     if (municipality) query[locale === 'pt' ? 'municipio' : 'municipality'] = municipality;
     if (activity) query[locale === 'pt' ? 'actividade' : 'activity'] = activity;
     if (status) query[locale === 'pt' ? 'estado' : 'status'] = status;
-    if (type) query[locale === 'pt' ? 'tipo' : 'type'] = type;
     router.push({ pathname: '/cooperativas', query });
   }
 
   function clear() {
-    setSearch(''); setProvince(''); setMunicipality(''); setActivity(''); setStatus(''); setType('');
+    setSearch(''); setProvince(''); setMunicipality(''); setActivity(''); setStatus('');
     router.push('/cooperativas');
   }
 
@@ -54,7 +52,6 @@ export function CooperativeDirectoryFilters({
       <label className="select-label"><span>{t('municipality')}</span><select value={municipality} onChange={(event) => setMunicipality(event.target.value)}><option value="">{t('all')}</option>{municipalities.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select></label>
       <label className="select-label"><span>{t('activity')}</span><select value={activity} onChange={(event) => setActivity(event.target.value)}><option value="">{t('all')}</option>{activities.map((item) => <option key={item.id} value={item.slug}>{item.name}</option>)}</select></label>
       <label className="select-label"><span>{t('status')}</span><select value={status} onChange={(event) => setStatus(event.target.value)}><option value="">{t('all')}</option>{(facets?.statuses ?? []).map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
-      <label className="select-label"><span>{t('type')}</span><select value={type} onChange={(event) => setType(event.target.value)}><option value="">{t('all')}</option>{(facets?.types ?? []).map((item) => <option key={item.value} value={item.value}>{item.label}</option>)}</select></label>
       <Button type="submit" className="full-width">{locale === 'pt' ? 'Aplicar filtros' : 'Apply filters'}</Button>
     </form>
   );
