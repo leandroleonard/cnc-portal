@@ -1,23 +1,42 @@
 import type { AdminUser } from '@/types/domain';
-import type { ApiEnvelope, AdminLoginPayload } from '@/types/api';
-import { apiRequest, initializeCsrfCookie } from './client';
+import type { ApiEnvelope } from '@/types/api';
+import { adminRequest, apiRequest, clearAccessToken, ApiError } from './client';
 
-export async function loginAdmin(payload: AdminLoginPayload): Promise<AdminUser> {
-  await initializeCsrfCookie();
-  const response = await apiRequest<ApiEnvelope<{ user: AdminUser }>>('/api/admin/login', {
+export type AdminBearerToken = { accessToken: string; expiresInSeconds?: number };
+
+type OAuth2TokenResponse = {
+  access_token: string;
+  token_type: string;
+  expires_in?: number;
+  scope?: string;
+};
+
+export async function loginAdmin(payload: { email: string; password: string }): Promise<AdminBearerToken> {
+  const form = new URLSearchParams({ username: payload.email, password: payload.password });
+  const response = await apiRequest<OAuth2TokenResponse>('/api/auth/token', {
     method: 'POST',
-    body: JSON.stringify(payload),
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: form.toString(),
   });
-  return response.data.user;
+  const validToken = typeof response?.access_token === 'string' && response.access_token.trim().length > 0;
+  const validTokenType = typeof response?.token_type === 'string' && response.token_type.toLowerCase() === 'bearer';
+  const validExpiry = response?.expires_in === undefined
+    || (typeof response.expires_in === 'number' && Number.isFinite(response.expires_in) && response.expires_in >= 0);
+  if (!validToken || !validTokenType || !validExpiry) {
+    throw new ApiError(502, { code: 'invalid_token_response', message: 'The authentication API did not return a valid bearer access token.' });
+  }
+  return { accessToken: response.access_token, expiresInSeconds: response.expires_in };
 }
 
-export async function getCurrentAdmin(cookieHeader?: string): Promise<AdminUser> {
-  const headers = new Headers();
-  if (cookieHeader) headers.set('Cookie', cookieHeader);
-  const response = await apiRequest<ApiEnvelope<AdminUser>>('/api/admin/me', { headers });
+export async function getCurrentAdmin(): Promise<AdminUser> {
+  const response = await adminRequest<ApiEnvelope<AdminUser>>('/api/admin/me');
   return response.data;
 }
 
 export async function logoutAdmin(): Promise<void> {
-  await apiRequest<ApiEnvelope<{ loggedOut: boolean }>>('/api/admin/logout', { method: 'POST' });
+  try {
+    await adminRequest<ApiEnvelope<{ revoked: boolean }>>('/api/admin/logout', { method: 'POST' });
+  } finally {
+    clearAccessToken();
+  }
 }

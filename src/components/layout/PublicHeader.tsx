@@ -15,8 +15,8 @@ const navigation = [
   { key: 'cooperatives', href: '/cooperativas' as const },
   { key: 'news', href: '/actualidade' as const },
   { key: 'institutional', href: '/institucional' as const },
-  // { key: 'documents', href: '/documentos' as const },
-  // { key: 'statistics', href: '/estatisticas' as const },
+  { key: 'documents', href: '/documentos' as const },
+  { key: 'statistics', href: '/estatisticas' as const },
   { key: 'contacts', href: '/contactos' as const },
 ];
 
@@ -101,7 +101,7 @@ export function PublicHeader() {
                 {t(item.key)}
               </Link>
             ))}
-            {/* <Link href="/cooperativas" className="nav-feature">{t('findCooperative')}</Link> */}
+            <Link href="/cooperativas" className="nav-feature">{t('findCooperative')}</Link>
           </nav>
           <div className="header-actions">
             <Button variant="ghost" className="icon-button" aria-label={t('search')} onClick={() => setSearchOpen(true)}>

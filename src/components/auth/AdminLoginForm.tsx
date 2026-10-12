@@ -4,8 +4,13 @@ import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff, LockKeyhole, LogIn, Mail } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { loginAdmin } from '@/lib/api/auth';
-import { ApiError } from '@/lib/api/client';
+import { ApiError, setAccessToken } from '@/lib/api/client';
 import { loginSchema } from '@/lib/validation/forms';
+import { safeAdminRedirect } from '@/lib/auth/admin-redirect';
+
+function safeNextAdminPath(): string {
+  return safeAdminRedirect(new URLSearchParams(window.location.search).get('next'), window.location.origin);
+}
 
 export function AdminLoginForm() {
   const router = useRouter();
@@ -29,8 +34,9 @@ export function AdminLoginForm() {
     }
     setLoading(true);
     try {
-      await loginAdmin(parsed.data);
-      router.replace('/admin');
+      const token = await loginAdmin(parsed.data);
+      setAccessToken(token.accessToken, token.expiresInSeconds);
+      router.replace(safeNextAdminPath());
       router.refresh();
     } catch (cause) {
       setError(cause instanceof ApiError && cause.status === 401 ? 'Email ou palavra-passe inválidos.' : cause instanceof Error ? cause.message : 'Não foi possível iniciar sessão.');

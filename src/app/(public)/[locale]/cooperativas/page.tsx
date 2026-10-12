@@ -88,7 +88,7 @@ export default async function CooperativesPage({ params, searchParams }: PagePro
             {result && <Pagination meta={result.meta} pathname="/cooperativas" query={pageQuery} labels={{ previous: common('previous'), next: common('next'), page: common('page', { current: result.meta.currentPage, total: result.meta.lastPage }) }} />}
           </div>
         </div>
-        {(provincesResult.error || activitiesResult.error || facetsResult.error) && <p className="filter-service-note">{locale === 'pt' ? 'Alguns filtros poderão estar indisponíveis enquanto a API não estiver configurada.' : 'Some filters may be unavailable until the API is configured.'}</p>}
+        {(provincesResult.error || activitiesResult.error || facetsResult.error) && <p className="filter-service-note">{locale === 'pt' ? 'Alguns filtros poderão estar indisponíveis enquanto o sistema não estiver configurado.' : 'Some filters may be unavailable until the system is configured.'}</p>}
       </Container>
     </section>
   </>;

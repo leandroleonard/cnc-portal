@@ -44,10 +44,10 @@ export function AdminShell({ children, user }: { children: React.ReactNode; user
 
   async function signOut() {
     setLoggingOut(true);
-    try { await logoutAdmin(); } finally { router.replace('/admin/login'); router.refresh(); setLoggingOut(false); }
+    try { await logoutAdmin(); } catch { /* Local token invalidation still ends the client session. */ } finally { router.replace('/admin/login'); router.refresh(); setLoggingOut(false); }
   }
 
-  return <div className="admin-shell">
+  return <AdminUserContext.Provider value={user}><div className="admin-shell">
     {drawerOpen && <button className="admin-sidebar-scrim" aria-label="Fechar navegação" onClick={() => setDrawerOpen(false)} />}
     <aside className={`admin-sidebar ${drawerOpen ? 'admin-sidebar--open' : ''}`}>
       <div className="admin-brand"><Link href="/admin"><Image src={staticMedia.cncLogo} alt="" width={44} height={44} sizes="44px" /><span><strong>CNC</strong><small>Gestão de conteúdos</small></span></Link><button className="admin-sidebar-close" aria-label="Fechar navegação" onClick={() => setDrawerOpen(false)}><X size={20} /></button></div>
@@ -68,5 +68,5 @@ export function AdminShell({ children, user }: { children: React.ReactNode; user
       </header>
       <main className="admin-content">{children}</main>
     </div>
-  </div>;
+  </div></AdminUserContext.Provider>;
 }

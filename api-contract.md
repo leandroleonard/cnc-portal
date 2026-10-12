@@ -1,11 +1,11 @@
 # CNC — Public and Admin API Contract
 
 **Status:** frontend integration contract / API v1  
-**Audience:** Laravel API team and CNC frontend maintainers  
+**Audience:** FastAPI team and CNC frontend maintainers  
 **API root:** `NEXT_PUBLIC_API_URL` (the host/root only; paths below include `/api`)  
 **Locales:** `pt` (Português) and `en` (English)
 
-This document describes the HTTP behavior consumed by the Next.js application. It is **not** a database schema, SQL specification, Laravel model/migration plan, or implementation prescription. The API is authoritative for content, publication state, authentication, permissions, and validation. The frontend contains no fictional cooperative, article, document, or statistics records. In particular, the client-provided “Agritech Show Luanda 2026” material, if approved, is backend/API seed content and is not a hardcoded public article here.
+This document describes the HTTP behavior consumed by the Next.js application and FastAPI service. It is **not** a database schema, SQL specification, FastAPI model/migration plan, or implementation prescription. The API is authoritative for content, publication state, authentication, permissions, and validation. The frontend contains no fictional cooperative, article, document, or statistics records. In particular, the client-provided “Agritech Show Luanda 2026” material, if approved, is backend/API seed content and is not a hardcoded public article here.
 
 The routes, payloads and response shapes below are the contract the current frontend expects. Backend-only additions are allowed when they remain backwards compatible. Breaking changes require coordinated frontend and API versioning.
 
@@ -17,7 +17,7 @@ The routes, payloads and response shapes below are the contract the current fron
 
 - Serve HTTPS in production; encode request and response bodies as UTF-8 JSON except file uploads.
 - Requests send `Accept: application/json`; JSON mutations send `Content-Type: application/json`.
-- The frontend sends `credentials: include` for API calls. Do not require a bearer token in browser storage.
+- The frontend sends `credentials: omit` for every API call. Public routes are unauthenticated; admin routes send `Authorization: Bearer <access_token>`. No cookies are used.
 - Dates/timestamps use ISO 8601/RFC 3339 UTC strings (for example `2026-10-09T12:30:00Z`). Date-only values use `YYYY-MM-DD`.
 - IDs are opaque strings. Slugs are URL-safe identifiers and must be unique within the relevant content type and locale policy.
 - Unknown response fields may be added. Do not rename or change the meaning of fields in this contract without a coordinated version change.
@@ -63,15 +63,15 @@ Preferred error shape:
 }
 ```
 
-`errors` maps field names to arrays of human-readable messages and is optional. `requestId` is useful for logs and support and is optional. For compatibility with Laravel validation middleware, the frontend also reads a top-level `{ "message": "...", "errors": { ... } }` body.
+`errors` maps field names to arrays of human-readable messages and is optional. `requestId` is useful for logs and support and is optional. FastAPI should normalize Pydantic validation errors to this shape. The frontend also reads a top-level `{ "message": "...", "errors": { ... } }` body and a standard OAuth2 `{"detail":"..."}` error.
 
 Common HTTP meanings:
 
 | Status | Meaning | Typical codes |
 |---|---|---|
 | `400` | malformed query/body or unsupported operation | `invalid_request`, `invalid_filter` |
-| `401` | no valid admin session / failed credentials | `unauthenticated`, `invalid_credentials` |
-| `403` | authenticated but not permitted, or CSRF origin/session rejection | `forbidden`, `csrf_mismatch` |
+| `401` | missing/invalid/expired bearer token, or failed credentials | `unauthenticated`, `invalid_token`, `invalid_credentials` |
+| `403` | valid bearer token but insufficient permission | `forbidden` |
 | `404` | resource or public slug is not visible | `not_found` |
 | `409` | duplicate slug, state conflict, or media asset still referenced | `conflict`, `duplicate_slug` |
 | `413` | upload too large | `file_too_large` |
@@ -79,7 +79,7 @@ Common HTTP meanings:
 | `429` | rate limit reached | `rate_limited` |
 | `500` / `503` | unexpected or temporarily unavailable service | `internal_error`, `service_unavailable` |
 
-Never return secrets, session values, password hashes, internal storage paths, or unpublished content in an error body.
+Never return access tokens, passwords, password hashes, internal storage paths, or unpublished content in an error body.
 
 ### 1.4 Locale and separate PT/EN content
 
@@ -296,29 +296,29 @@ Validate and normalize email on the server. `locale` is `pt|en`. Repeated reques
 
 ## 4. Admin authentication and authorization
 
-### 4.1 Session lifecycle
+### 4.1 OAuth2 bearer-token lifecycle
 
-All `/api/admin/*` routes except `POST /api/admin/login` require a valid server-side CNC admin session. The frontend neither stores access tokens in `localStorage` nor treats a cookie's mere presence as proof of authorization. `GET /api/admin/me` validates the session and permissions with the backend.
+All `/api/admin/*` routes except `POST /api/auth/token` require a valid access token in `Authorization: Bearer <access_token>`. The frontend uses the OAuth2 password-bearer flow and stores the access token only in a module-level JavaScript memory store. It is never placed in a cookie, URL, HTML, `localStorage` or `sessionStorage`. A page reload/new tab requires a fresh login. There is no refresh-token flow in this contract.
 
-The application is wired for Laravel Sanctum cookie-based SPA sessions:
+Token flow:
 
-1. Before login the browser requests `GET {NEXT_PUBLIC_SANCTUM_URL}/sanctum/csrf-cookie` with credentials.
-2. The browser posts credentials to `/api/admin/login` with cookies and the `X-XSRF-TOKEN` value when supplied by the backend.
-3. The API sets an `HttpOnly`, `Secure` (production), appropriately scoped session cookie and an XSRF cookie that is readable by the browser. The cookie name must match `ADMIN_SESSION_COOKIE` in the frontend environment (default `cnc_admin_session`; use the actual Sanctum session cookie name if different).
-4. Subsequent requests include credentials. The dashboard server forwards the incoming cookie to `/api/admin/me`.
-5. `POST /api/admin/logout` invalidates the server session and expires the cookies.
+1. The browser submits `application/x-www-form-urlencoded` fields `username` and `password` to `POST /api/auth/token`. The frontend passes the login email as the OAuth2 `username` value.
+2. The API returns a standard OAuth2 token response containing `access_token`, `token_type: "bearer"`, and optional `expires_in` seconds (plus optional `scope`). This endpoint is intentionally not wrapped in the regular `{data:...}` envelope.
+3. The frontend keeps the token in memory, adds `Authorization: Bearer …` to protected API calls, and starts a local expiry timer when `expires_in` is supplied. It discards the token on logout, expiry or any admin `401`.
+4. The client calls `GET /api/admin/me` with the bearer token before rendering the protected admin shell. FastAPI validates the token and returns the authorized identity.
+5. `POST /api/admin/logout` may revoke/blacklist the presented token and returns `{data:{revoked:true}}` or `204`. Regardless of API revocation support, the frontend clears its local in-memory token. If access tokens are stateless JWTs, they remain valid until expiry unless the backend implements revocation; choose a short lifetime appropriate to CNC policy.
 
-For cross-origin deployments, configure exact allowed frontend origins, credentialed CORS, allowed headers (`Accept`, `Content-Type`, `X-XSRF-TOKEN`), and the correct cookie domain/SameSite policy. A same-site reverse proxy/API subdomain under the CNC website domain is preferred. Do not use wildcard origins with credentials. If the API uses a different CSRF handshake, coordinate and update the frontend client rather than disabling CSRF protection.
+The frontend explicitly uses `credentials: omit` for API calls. Do not set auth cookies or require XSRF cookies. For cross-origin deployment, configure exact allowed origins, allow `Authorization`, `Accept` and `Content-Type` headers, and handle `OPTIONS` preflight. Do not enable credentialed CORS or wildcard origins for authenticated requests. Rate-limit token issuance and return `401` without revealing whether the username exists.
 
 ### 4.2 Login and identity
 
 | Method and path | Auth | Body / query | Response |
 |---|---|---|---|
-| `POST /api/admin/login` | guest; rate-limited | `{email,password,remember?}` | `{data:{user:AdminUser}}` and session cookie |
-| `GET /api/admin/me` | session | none | `{data:AdminUser}` |
-| `POST /api/admin/logout` | session + CSRF | none | `{data:{loggedOut:true}}` |
+| `POST /api/auth/token` | guest; rate-limited | form-urlencoded `{username,password}` | `{access_token,token_type,expires_in?,scope?}` |
+| `GET /api/admin/me` | bearer | none | `{data:AdminUser}` |
+| `POST /api/admin/logout` | bearer | none | `{data:{revoked:true}}` or `204` |
 
-`AdminUser` contains `id`, `name`, `email`, `role`, `permissions: string[]`, and optional `avatar`. Login failure returns `401 invalid_credentials` without revealing whether the email exists. `remember` is optional and defaults to false. Enforce throttling, session rotation after login, expiry/invalidation, and server-side role/permission checks.
+`AdminUser` contains `id`, `name`, `email`, `role`, `permissions: string[]`, and optional `avatar`. Token failure returns `401` with `invalid_credentials` or `invalid_token` without revealing whether the username exists. Protect token signing keys, validate issuer/audience/expiry, apply least privilege, and enforce server-side role/permission checks.
 
 ### 4.3 Permission model
 
@@ -328,7 +328,7 @@ Permissions are returned as explicit strings on `AdminUser`; the frontend uses t
 |---|---|---|---|---|
 | Dashboard | `dashboard.view` | — | — | — |
 | Hero slides | `hero-slides.view` | `hero-slides.create` | `hero-slides.update` | `hero-slides.delete`; ordering requires update/manage |
-| Cooperatives | `cooperatives.view` | `cooperatives.create` | `cooperatives.update` | if enabled, `cooperatives.delete`; status changes require update/publish |
+| Cooperatives | `cooperatives.view` | `cooperatives.create` | `cooperatives.update` | `cooperatives.delete`; status changes require update/publish |
 | News | `news.view` | `news.create` | `news.update` | `news.delete`; publication requires `news.publish` or `news.update` as policy specifies |
 | Documents | `documents.view` | `documents.create` | `documents.update` | `documents.delete`; publication requires update/publish |
 | Institutional content | `institutional.view` | — | `institutional.update` | — |
@@ -358,7 +358,7 @@ Media additionally accepts `mimeType` (`image` means any `image/*`; otherwise a 
 
 ## 6. Admin content API
 
-The following routes require a valid session plus the resource permission in §4.3. Create/update responses return the canonical saved record, including server IDs, timestamps, localized fields, and any normalized status.
+The following routes require a valid bearer token plus the resource permission in §4.3. Create/update responses return the canonical saved record, including server IDs, timestamps, localized fields, and any normalized status.
 
 ### 6.1 Dashboard
 
@@ -390,10 +390,11 @@ The following routes require a valid session plus the resource permission in §4
 | `POST /api/admin/cooperatives` | `cooperatives.create` | `CooperativeInput` | `201` record |
 | `PATCH /api/admin/cooperatives/{id}` | `cooperatives.update` | partial `CooperativeInput` | record |
 | `PATCH /api/admin/cooperatives/{id}/status` | `cooperatives.update` | `{status}` | record |
+| `DELETE /api/admin/cooperatives/{id}` | `cooperatives.delete` | — | `{data:{deleted:true}}` or `204` |
 
 `CooperativeInput` requires `slug`, PT+EN `translations` (`name`, optional `summary`/`description`), `provinceId`, `activityIds`, and `status` (`active|pending_review|inactive`). Optional fields: `municipalityId`, `commune`, `address`, `type`, `registrationNumber`, `foundedYear`, non-negative `memberCount`, `logoId`, `coverImageId`, `galleryIds`, public `contacts`, and `location` coordinates/address. Validate province/municipality consistency, unique slug, references, coordinate ranges, and all publication requirements. Inactive/pending records remain private from public API results.
 
-The current frontend has no cooperative `DELETE` function; do not require it for client operation. Prefer archival/status changes unless CNC policy separately adds a deletion flow.
+`DELETE /api/admin/cooperatives/{id}` performs the cooperative deletion/archive operation allowed by CNC policy. The frontend exposes this action only to users with `cooperatives.delete`; the API must reject deletion if records are protected or referenced, or use a documented archive behavior.
 
 ### 6.4 News and categories
 
@@ -454,7 +455,7 @@ Input fields: optional `id` in the client form only; `key`; PT+EN `translations`
 
 Upload uses `multipart/form-data` with `file` (required), optional `altText`, `caption`, and `locale`. The browser currently checks a 20 MiB default maximum and selects only the accepted file types configured on each control; backend limits remain authoritative and should return `413` or `422` with a useful message. Validate actual file signatures/MIME, size, extension, malware policy, image dimensions, and user permission. Generate opaque URLs; do not return internal filesystem paths. If an asset is still referenced, either reject deletion with `409 media_in_use` or define a safe detach/replacement policy.
 
-The upload client sends credentials, uses XSRF when present, reports upload progress, and supports abort. The API must allow credentialed CORS for the upload origin.
+The upload client sends a bearer header, omits cookies, and supports abort. Fetch does not expose portable byte-accurate upload progress, so the UI reports the in-progress/completed states. FastAPI CORS must allow the `Authorization` header and upload preflight from the exact website origin.
 
 ### 6.9 Social links
 
@@ -499,7 +500,7 @@ Input: optional `logoId`, optional legacy-compatible `logo` media object, `favic
 ## 7. Validation, security and operational guarantees
 
 1. **Backend authority:** authenticate and authorize every admin call on the server; never trust client role/permission flags.
-2. **CSRF/CORS:** use the session framework's CSRF controls for mutations; permit only explicitly configured frontend origins with credentials.
+2. **Bearer/CORS:** validate bearer tokens and scopes/permissions on every protected operation; allow only explicit frontend origins and required headers. No cookies or credentialed CORS are used.
 3. **Validation:** repeat all client Zod checks on the API, including type, length, format, references, translation completeness, and workflow transitions.
 4. **Uploads:** validate file content, not just the browser `accept` attribute; configure size/type limits, scanning, storage and cache policy. Do not expose storage internals.
 5. **Search:** apply bounded, parameterized, allow-listed search/sort/filter queries; return stable pagination metadata.
@@ -513,4 +514,4 @@ Input: optional `logoId`, optional legacy-compatible `logo` media object, `favic
 
 The typed endpoint functions are centralized in `src/lib/api/public.ts`, `src/lib/api/admin.ts`, `src/lib/api/auth.ts`, and `src/lib/api/media.ts`; query serialization is in `src/lib/api/query.ts`; shared request/error handling is in `src/lib/api/client.ts`; API-facing TypeScript shapes are in `src/types/api.ts` and `src/types/domain.ts`. Components should use these functions rather than making ad-hoc fetch calls.
 
-Contract changes should update those types/functions, this document, API integration tests, and any public/admin UI affected by the change. The frontend does not create Laravel models, database tables, migrations, or SQL.
+Contract changes should update those types/functions, this document, API integration tests, and any public/admin UI affected by the change. The frontend does not create FastAPI models, database tables, migrations, or SQL.

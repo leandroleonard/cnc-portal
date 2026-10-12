@@ -23,6 +23,55 @@ export class ApiConfigurationError extends Error {
   }
 }
 
+export class AuthenticationRequiredError extends Error {
+  constructor() {
+    super('An in-memory bearer token is required for this admin request. Please sign in again.');
+    this.name = 'AuthenticationRequiredError';
+  }
+}
+
+let accessToken: string | null = null;
+let accessTokenExpiresAt: number | null = null;
+let expiryTimer: ReturnType<typeof setTimeout> | null = null;
+const tokenSubscribers = new Set<() => void>();
+
+export function getAccessToken(): string | null {
+  if (accessTokenExpiresAt !== null && Date.now() >= accessTokenExpiresAt) return null;
+  return accessToken;
+}
+
+export function subscribeToAccessToken(listener: () => void): () => void {
+  tokenSubscribers.add(listener);
+  return () => tokenSubscribers.delete(listener);
+}
+
+function publishTokenChange() {
+  for (const listener of tokenSubscribers) listener();
+}
+
+export function setAccessToken(token: string, expiresInSeconds?: number): void {
+  accessToken = token.trim() || null;
+  accessTokenExpiresAt = accessToken && expiresInSeconds !== undefined && Number.isFinite(expiresInSeconds) && expiresInSeconds >= 0
+    ? Date.now() + expiresInSeconds * 1000
+    : null;
+  if (expiryTimer) clearTimeout(expiryTimer);
+  expiryTimer = null;
+  if (accessTokenExpiresAt !== null) {
+    const delay = Math.min(Math.max(0, accessTokenExpiresAt - Date.now()), 2_147_483_647);
+    expiryTimer = setTimeout(() => clearAccessToken(), delay);
+  }
+  publishTokenChange();
+}
+
+export function clearAccessToken(): void {
+  const hadToken = accessToken !== null;
+  accessToken = null;
+  accessTokenExpiresAt = null;
+  if (expiryTimer) clearTimeout(expiryTimer);
+  expiryTimer = null;
+  if (hadToken) publishTokenChange();
+}
+
 type JsonRecord = Record<string, unknown>;
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -35,38 +84,6 @@ function apiBaseUrl(): string {
   return base;
 }
 
-function sanctumBaseUrl(): string {
-  return process.env.NEXT_PUBLIC_SANCTUM_URL?.trim().replace(/\/$/, '') || apiBaseUrl();
-}
-
-export async function initializeCsrfCookie(): Promise<void> {
-  let response: Response;
-  try {
-    response = await fetch(`${sanctumBaseUrl()}/sanctum/csrf-cookie`, {
-      method: 'GET',
-      headers: { Accept: 'application/json' },
-      credentials: 'include',
-      cache: 'no-store',
-    });
-  } catch (error) {
-    if (error instanceof ApiConfigurationError) throw error;
-    throw new ApiError(0, { code: 'network_error', message: 'The CNC API could not be reached to initialize a secure session.' });
-  }
-  if (!response.ok) throw parseError(response.status, await response.json().catch(() => null));
-}
-
-function readXsrfCookie(): string | undefined {
-  if (typeof document === 'undefined') return undefined;
-  const cookie = document.cookie.split('; ').find((item) => item.startsWith('XSRF-TOKEN='));
-  if (!cookie) return undefined;
-  const value = cookie.slice('XSRF-TOKEN='.length);
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
-}
-
 function parseError(status: number, payload: unknown): ApiError {
   const outer = isRecord(payload) ? payload : {};
   const body = isRecord(outer.error) ? outer.error : outer;
@@ -77,9 +94,10 @@ function parseError(status: number, payload: unknown): ApiError {
         ),
       )
     : undefined;
+  const detail = typeof body.detail === 'string' ? body.detail : undefined;
   return new ApiError(status, {
     code: typeof body.code === 'string' ? body.code : undefined,
-    message: typeof body.message === 'string' ? body.message : `The API request failed (${status}).`,
+    message: typeof body.message === 'string' ? body.message : detail ?? `The API request failed (${status}).`,
     errors: fieldErrors,
     requestId: typeof body.requestId === 'string' ? body.requestId : undefined,
   });
@@ -92,18 +110,13 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   if (init.body && !hasFormData && !headers.has('Content-Type')) {
     headers.set('Content-Type', 'application/json');
   }
-  const method = (init.method ?? 'GET').toUpperCase();
-  if (!['GET', 'HEAD', 'OPTIONS'].includes(method)) {
-    const xsrfToken = readXsrfCookie();
-    if (xsrfToken && !headers.has('X-XSRF-TOKEN')) headers.set('X-XSRF-TOKEN', xsrfToken);
-  }
 
   let response: Response;
   try {
     response = await fetch(`${apiBaseUrl()}${path.startsWith('/') ? path : `/${path}`}`, {
       ...init,
       headers,
-      credentials: init.credentials ?? 'include',
+      credentials: 'omit',
       cache: init.cache ?? 'no-store',
     });
   } catch (error) {
@@ -117,6 +130,22 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   const payload: unknown = await response.json().catch(() => null);
   if (!response.ok) throw parseError(response.status, payload);
   return payload as T;
+}
+
+export async function adminRequest<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const token = getAccessToken();
+  if (!token) {
+    clearAccessToken();
+    throw new AuthenticationRequiredError();
+  }
+  const headers = new Headers(init.headers);
+  headers.set('Authorization', `Bearer ${token}`);
+  try {
+    return await apiRequest<T>(path, { ...init, headers });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) clearAccessToken();
+    throw error;
+  }
 }
 
 export function unwrapData<T>(payload: { data: T }): T {

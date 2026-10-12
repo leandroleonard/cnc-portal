@@ -49,7 +49,7 @@ export function AngolaProvinceMap({ provinces, selectedCode, showList = true }: 
         <div className="province-list province-list--light">
           {provinces.map((province) => <button key={province.id} className={province.code.toUpperCase() === selectedCode?.toUpperCase() ? 'selected' : ''} onClick={() => selectProvince(province)}>{province.name}{province.cooperativeCount !== null && province.cooperativeCount !== undefined && <span>{province.cooperativeCount}</span>}</button>)}
         </div>
-        {provinces.length === 0 && <p>{locale === 'pt' ? 'As opções de província serão fornecidas pela API.' : 'Province options will be provided by the API.'}</p>}
+        {provinces.length === 0 && <p>{locale === 'pt' ? 'As província serão fornecidas pelo sistema.' : 'Province options will be provided by the system.'}</p>}
       </aside>}
     </div>
   );

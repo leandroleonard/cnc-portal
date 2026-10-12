@@ -13,14 +13,14 @@ import { Button } from '@/components/ui/primitives';
 
 const emptyMeta: PaginationMeta = { currentPage: 1, perPage: 24, total: 0, lastPage: 1, from: null, to: null };
 
-export function MediaLibrary({ initial, initialMeta, initialSearch = '', initialType = '' }: { initial: MediaAsset[]; initialMeta: PaginationMeta; initialSearch?: string; initialType?: string }) {
+export function MediaLibrary({ initial, initialMeta, initialSearch = '', initialType = '', initialPage = initialMeta.currentPage }: { initial: MediaAsset[]; initialMeta: PaginationMeta; initialSearch?: string; initialType?: string; initialPage?: number }) {
   const [search, setSearch] = useState(initialSearch);
   const [type, setType] = useState(initialType);
-  const [page, setPage] = useState(initialMeta.currentPage);
+  const [page, setPage] = useState(initialPage);
   const [refresh, setRefresh] = useState(0);
   const queryKey = JSON.stringify([search, page, type, refresh]);
   const [collection, setCollection] = useState(() => ({
-    key: JSON.stringify([initialSearch, initialMeta.currentPage, initialType, 0]),
+    key: JSON.stringify([initialSearch, initialPage, initialType, 0]),
     items: initial,
     meta: initialMeta ?? emptyMeta,
     error: '',
@@ -64,7 +64,7 @@ export function MediaLibrary({ initial, initialMeta, initialSearch = '', initial
   }
 
   async function remove(item: MediaAsset) {
-    if (!window.confirm(`Eliminar ${item.filename ?? 'este ficheiro'}? Se estiver associado a conteúdo, a API poderá impedir a remoção.`)) return;
+    if (!window.confirm(`Eliminar ${item.filename ?? 'este ficheiro'}? Se estiver associado a conteúdo, o sistema poderá impedir a remoção.`)) return;
     try { setError(''); await deleteMedia(item.id); setCollection((current) => ({ ...current, items: current.items.filter((entry) => entry.id !== item.id), meta: { ...current.meta, total: Math.max(0, current.meta.total - 1) } })); setSuccess('Ficheiro eliminado.'); }
     catch (cause) { setError(cause instanceof Error ? cause.message : 'Não foi possível eliminar o ficheiro.'); }
   }

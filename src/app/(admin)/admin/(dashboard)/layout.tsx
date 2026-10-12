@@ -1,20 +1,36 @@
-import { headers } from 'next/headers';
-import { redirect } from 'next/navigation';
-import { getCurrentAdmin } from '@/lib/api/auth';
+'use client';
+
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { AdminShell } from '@/components/admin/AdminShell';
-import { ApiError } from '@/lib/api/client';
+import { getCurrentAdmin } from '@/lib/api/auth';
+import { clearAccessToken, getAccessToken, subscribeToAccessToken } from '@/lib/api/client';
 import type { AdminUser } from '@/types/domain';
 
-export default async function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
-  const requestHeaders = await headers();
-  const cookieHeader = requestHeaders.get('cookie') ?? undefined;
-  let user: AdminUser;
-  try {
-    user = await getCurrentAdmin(cookieHeader);
-  } catch (error) {
-    const next = '/admin';
-    if (error instanceof ApiError && error.status === 403) redirect('/admin/login');
-    redirect(`/admin/login?next=${encodeURIComponent(next)}`);
+export default function AdminDashboardLayout({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const token = useSyncExternalStore(subscribeToAccessToken, getAccessToken, () => null);
+  const [identity, setIdentity] = useState<{ token: string; user: AdminUser } | null>(null);
+
+  useEffect(() => {
+    if (!token) {
+      router.replace(`/admin/login?next=${encodeURIComponent(pathname || '/admin')}`);
+      return;
+    }
+    let active = true;
+    void getCurrentAdmin()
+      .then((user) => { if (active) setIdentity({ token, user }); })
+      .catch(() => {
+        if (!active) return;
+        clearAccessToken();
+        router.replace(`/admin/login?next=${encodeURIComponent(pathname || '/admin')}`);
+      });
+    return () => { active = false; };
+  }, [token, pathname, router]);
+
+  if (!token || !identity || identity.token !== token) {
+    return <main className="admin-state" role="status"><p>A validar o token de acesso…</p></main>;
   }
-  return <AdminShell user={user}>{children}</AdminShell>;
+  return <AdminShell user={identity.user}>{children}</AdminShell>;
 }

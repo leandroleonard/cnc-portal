@@ -67,6 +67,6 @@ export type AdminListQuery = {
   direction?: 'asc' | 'desc';
 };
 
-export type AdminLoginPayload = { email: string; password: string; remember?: boolean };
-export type AdminLoginResponse = { user: import('./domain').AdminUser };
+export type AdminLoginPayload = { username: string; password: string };
+export type AdminLoginResponse = { access_token: string; token_type: 'bearer'; expires_in?: number; scope?: string };
 export type ApiResult<T> = { data: T; meta?: Record<string, unknown> };
