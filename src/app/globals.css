@@ -1,3 +1,4 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap");
 
 :root {
   --navy-950: #071b2d;
@@ -414,6 +415,9 @@ h3 {
   border: 1px solid rgba(255, 255, 255, 0.22);
   border-radius: var(--radius-md);
   backdrop-filter: blur(12px);
+  position: absolute;
+  margin: -3rem 2rem 0 0;
+  right: 0;
 }
 
 .hero__territory svg {

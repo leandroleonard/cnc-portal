@@ -15,8 +15,6 @@ const navigation = [
   { key: 'cooperatives', href: '/cooperativas' as const },
   { key: 'news', href: '/actualidade' as const },
   { key: 'institutional', href: '/institucional' as const },
-  { key: 'documents', href: '/documentos' as const },
-  { key: 'statistics', href: '/estatisticas' as const },
   { key: 'contacts', href: '/contactos' as const },
 ];
 

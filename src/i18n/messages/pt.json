@@ -17,7 +17,7 @@
   "brand": {
     "name": "Conselho Nacional de Cooperativas",
     "portal": "Portal nacional do movimento cooperativo de Angola",
-    "tagline": "Fortalecendo o movimento cooperativo em Angola"
+    "tagline": "Cooperativas que fortalecem Angola"
   },
   "footer": {
     "about": "Uma plataforma pública de referência para conhecer, acompanhar e valorizar o movimento cooperativo em Angola.",
@@ -61,10 +61,10 @@
   },
   "hero": {
     "eyebrow": "Conselho Nacional de Cooperativas",
-    "title": "Fortalecendo o movimento cooperativo em Angola",
-    "description": "Promovemos a cooperação, damos visibilidade às organizações e aproximamos o movimento cooperativo de todo o país.",
-    "primary": "Conhecer o CNC",
-    "secondary": "Explorar cooperativas",
+    "title": "Cooperativas que fortalecem Angola",
+    "description": "Informação, ,cooperação e desenvolvimento para um movimento cooperativo mais forte e visível.",
+    "primary": "Explorar Cooperativas",
+    "secondary": "Conhecer o CNC",
     "previous": "Slide anterior",
     "next": "Slide seguinte",
     "pause": "Pausar apresentação",

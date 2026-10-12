@@ -17,7 +17,7 @@
   "brand": {
     "name": "National Council of Cooperatives",
     "portal": "Angola's national cooperative movement portal",
-    "tagline": "Strengthening the cooperative movement in Angola"
+    "tagline": "Cooperatives that strengthen Angola"
   },
   "footer": {
     "about": "A public reference platform to discover, follow and celebrate Angola's cooperative movement.",
@@ -61,10 +61,10 @@
   },
   "hero": {
     "eyebrow": "National Council of Cooperatives",
-    "title": "Strengthening the cooperative movement in Angola",
-    "description": "We promote cooperation, give organisations visibility and connect the cooperative movement across the country.",
-    "primary": "Discover CNC",
-    "secondary": "Explore cooperatives",
+    "title": "Cooperatives that strengthen Angola",
+    "description": "Information, cooperation and development for a stronger and more visual cooperative movement.",
+    "primary": "Explore Cooperatives",
+    "secondary": "Discover CNC",
     "previous": "Previous slide",
     "next": "Next slide",
     "pause": "Pause slideshow",

@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { ArrowLeft, ArrowRight, Pause, Play } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Map, Pause, Play } from 'lucide-react';
 import { useTranslations } from 'next-intl';
 import type { HeroSlide, Locale } from '@/types/domain';
 import { mediaUrl, staticMedia } from '@/lib/media';
@@ -27,8 +27,8 @@ export function HeroSlider({ slides, locale }: { slides: HeroSlide[]; locale: Lo
     description: t('description'),
     logo: { id: 'cnc-logo', url: staticMedia.cncLogo, altText: t('logoAlt') },
     image: { id: 'hero-fallback', url: staticMedia.heroFallback, altText: '' },
-    primaryAction: { label: t('primary'), href: '/institucional' },
-    secondaryAction: { label: t('secondary'), href: '/cooperativas' },
+    primaryAction: { label: t('primary'), href: '/cooperativas' },
+    secondaryAction: { label: t('secondary'), href: '/institucional' },
     order: 0,
     active: true,
     locale,
@@ -65,7 +65,7 @@ export function HeroSlider({ slides, locale }: { slides: HeroSlide[]; locale: Lo
 
   function actionLink(href: string, label: string, variant: 'light' | 'secondary') {
     const external = /^https?:\/\//i.test(href);
-    return <a className={`button button--${variant}`} href={href} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined}>{label}</a>;
+    return <a className={`button button--${variant}`} href={href} target={external ? '_blank' : undefined} rel={external ? 'noreferrer' : undefined}>{label} {variant == 'light' && (<ArrowRight size={18} />)}</a>;
   }
 
   return (
@@ -91,13 +91,20 @@ export function HeroSlider({ slides, locale }: { slides: HeroSlide[]; locale: Lo
       <div className="hero__overlay" />
       <div className="hero-slider__content container">
         <div className="hero__copy">
-          {logoSrc && <div className="hero-slider__logo"><Image src={logoSrc} alt={activeSlide.logo?.altText ?? t('logoAlt')} width={92} height={92} sizes="92px" /></div>}
+          {/* {logoSrc && <div className="hero-slider__logo"><Image src={logoSrc} alt={activeSlide.logo?.altText ?? t('logoAlt')} width={92} height={92} sizes="92px" /></div>} */}
           <p className="eyebrow eyebrow--gold">{activeSlide.subtitle || t('eyebrow')}</p>
           <h1>{activeSlide.title}</h1>
           {activeSlide.description && <p className="hero__lead">{activeSlide.description}</p>}
           <div className="button-row">
             {activeSlide.primaryAction && actionLink(activeSlide.primaryAction.href, activeSlide.primaryAction.label, 'light')}
             {activeSlide.secondaryAction && actionLink(activeSlide.secondaryAction.href, activeSlide.secondaryAction.label, 'secondary')}
+          </div>
+          <div className="hero__territory">
+            <Map size={28} />
+            <div>
+              <strong>Abrangência nacional</strong>
+              <span>Representação de todo o território angolano</span>
+            </div>
           </div>
         </div>
         <div className="hero-slider__controls" aria-label={locale === 'pt' ? 'Controlos do carrossel' : 'Carousel controls'}>
