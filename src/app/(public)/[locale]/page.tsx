@@ -1,4 +1,18 @@
-import { Activity, ArrowRight, Building2, MapPin, Users } from 'lucide-react';
+import {
+  Activity,
+  ArrowRight,
+  Building2,
+  CircleDollarSign,
+  Construction,
+  Factory,
+  Fish,
+  MapPin,
+  Sprout,
+  Tractor,
+  Users,
+  Wheat,
+  Wrench,
+} from 'lucide-react';
 import Image from 'next/image';
 import { getTranslations } from 'next-intl/server';
 import type { Metadata } from 'next';
@@ -19,6 +33,45 @@ import { staticMedia } from '@/lib/media';
 import type { Locale } from '@/types/domain';
 
 type PageProps = { params: Promise<{ locale: string }> };
+
+const normalizeActivityKey = (value?: string | null) =>
+  (value ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .trim();
+
+const activityIconMap: Record<string, typeof Activity> = {
+  agricultura: Wheat,
+  agriculture: Wheat,
+  agropecuaria: Tractor,
+  livestock: Sprout,
+  pecuaria: Sprout,
+  pesca: Fish,
+  pescas: Fish,
+  fishing: Fish,
+  comercio: CircleDollarSign,
+  trade: CircleDollarSign,
+  industria: Factory,
+  industry: Factory,
+  servicos: Wrench,
+  services: Wrench,
+  construcao: Construction,
+  construction: Construction,
+};
+
+function getActivityIcon(activity: { slug?: string | null; name?: string | null }) {
+  const keys = [activity.slug, activity.name];
+
+  for (const key of keys) {
+    const normalizedKey = normalizeActivityKey(key);
+    if (normalizedKey && activityIconMap[normalizedKey]) {
+      return activityIconMap[normalizedKey];
+    }
+  }
+
+  return Activity;
+}
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { locale: localeParam } = await params;
@@ -91,7 +144,22 @@ export default async function HomePage({ params }: PageProps) {
       <section className="section activity-section">
         <Container>
           <SectionHeading eyebrow={t('activitiesEyebrow')} title={t('activitiesTitle')} />
-          {activities.length ? <div className="activity-grid">{activities.map((activity) => <Link className="activity-card" href={{ pathname: '/cooperativas', query: locale === 'pt' ? { actividade: activity.slug } : { activity: activity.slug } }} key={activity.id}><Activity size={25} aria-hidden="true" /><strong>{activity.name}</strong><span>{activity.cooperativeCount ?? ''}</span><ArrowRight size={17} aria-hidden="true" /></Link>)}</div> : <ResourceState variant={activitiesResult.error ? 'error' : 'empty'} title={activitiesResult.error ? common('errorTitle') : common('emptyTitle')} description={activitiesResult.error ? apiErrorDescription(activitiesResult.error, common('apiNotConfigured'), common('errorDescription')) : common('emptyDescription')} compact />}
+          {activities.length ?
+            <div className="activity-grid">
+              {activities.map((activity) => {
+                const ActivityIcon = getActivityIcon(activity);
+
+                return (
+                  <Link className="activity-card" href={{ pathname: '/cooperativas', query: locale === 'pt' ? { actividade: activity.slug } : { activity: activity.slug } }} key={activity.id}>
+                    <ActivityIcon size={25} aria-hidden="true" />
+                    <strong>{activity.name}</strong>
+                    <span>{activity.cooperativeCount ?? ''}</span>
+                    <ArrowRight size={17} aria-hidden="true" />
+                  </Link>
+                );
+              })}
+            </div> :
+            <ResourceState variant={activitiesResult.error ? 'error' : 'empty'} title={activitiesResult.error ? common('errorTitle') : common('emptyTitle')} description={activitiesResult.error ? apiErrorDescription(activitiesResult.error, common('apiNotConfigured'), common('errorDescription')) : common('emptyDescription')} compact />}
         </Container>
       </section>
 
