@@ -171,7 +171,76 @@
       "eyebrow": "About CNC",
       "title": "About the CNC",
       "description": "Learn about the National Council of Cooperatives, its mission, vision, values and areas of work.",
-      "empty": "Institutional content will be published after validation by CNC."
+      "empty": "Institutional content will be published after validation by CNC.",
+      "intro": {
+        "eyebrow": "Who we are",
+        "title": "A reference point for the national cooperative movement",
+        "body1": "This space was designed to present the identity, history and institutional framework of CNC. Official content may be added and updated later by the responsible team.",
+        "body2": "The portal brings together information, organizations and citizens, creating a clearer view of the presence and contribution of cooperatives across the territory.",
+        "mission": {
+          "title": "Mission",
+          "body": "Institutional text to be validated and published by CNC."
+        },
+        "vision": {
+          "title": "Vision",
+          "body": "Institutional text to be validated and published by CNC."
+        },
+        "values": {
+          "title": "Values",
+          "body": "Cooperation, transparency, proximity and development."
+        }
+      },
+      "leader": {
+        "eyebrow": "Institutional message",
+        "title": "Working together to build opportunities and strengthen communities",
+        "body": "Space reserved for a message from the President or institutional representative. The name, role, photo and signature will be added after validation.",
+        "photoAlt": "Institutional photography"
+      },
+      "structure": {
+        "eyebrow": "Organization",
+        "title": "Institutional structure",
+        "body": "Area prepared to represent the CNC structure clearly and adaptably.",
+        "main": "Main body",
+        "institutional": "Institutional area",
+        "technical": "Technical area",
+        "communication": "Communication area"
+      },
+      "work": {
+        "eyebrow": "Demonstrative areas of work",
+        "title": "The work of CNC",
+        "body": "A platform to bring people closer, share information and give visibility to cooperatives, helping build a more connected and growth-ready ecosystem.",
+        "cta": "Learn about the institution",
+        "items": {
+          "support": {
+            "title": "Support",
+            "body": "Close proximity to cooperatives and territories."
+          },
+          "promotion": {
+            "title": "Promotion",
+            "body": "Highlighting the economic and social role of cooperatives."
+          },
+          "capacity": {
+            "title": "Capacity building",
+            "body": "Sharing knowledge and strengthening organizations."
+          },
+          "articulation": {
+            "title": "Coordination",
+            "body": "Bridges between cooperatives, partners and institutions."
+          },
+          "information": {
+            "title": "Information",
+            "body": "Accessible data for more transparent decisions."
+          },
+          "development": {
+            "title": "Development",
+            "body": "Driving initiatives with sustainable impact."
+          }
+        }
+      },
+      "brand": {
+        "eyebrow": "CNC",
+        "title": "National Council of Cooperatives"
+      }
     },
     "documents": {
       "eyebrow": "Document library",

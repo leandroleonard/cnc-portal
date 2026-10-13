@@ -171,7 +171,76 @@
       "eyebrow": "Institucional",
       "title": "Sobre o CNC",
       "description": "Conheça o Conselho Nacional de Cooperativas, a sua missão, visão, valores e áreas de actuação.",
-      "empty": "Ainda não foram publicados os dados referentes a esta secção." 
+      "empty": "Ainda não foram publicados os dados referentes a esta secção.",
+      "intro": {
+        "eyebrow": "Quem somos",
+        "title": "Uma referência para o movimento cooperativo nacional",
+        "body1": "Este espaço foi estruturado para apresentar a identidade, história e enquadramento institucional do CNC. Os conteúdos oficiais poderão ser inseridos e actualizados posteriormente pela equipa responsável.",
+        "body2": "O portal aproxima informação, organizações e cidadãos, criando uma visão mais clara sobre a presença e o contributo das cooperativas em todo o território.",
+        "mission": {
+          "title": "Missão",
+          "body": "Texto institucional a validar."
+        },
+        "vision": {
+          "title": "Visão",
+          "body": "Texto institucional a validar."
+        },
+        "values": {
+          "title": "Valores",
+          "body": "Cooperação, transparência, proximidade e desenvolvimento."
+        }
+      },
+      "leader": {
+        "eyebrow": "Mensagem institucional",
+        "title": "Cooperar para construir oportunidades e fortalecer comunidades",
+        "body": "Espaço reservado para uma mensagem do Presidente ou responsável institucional. O nome, cargo, fotografia e assinatura serão adicionados após validação.",
+        "photoAlt": "Fotografia institucional"
+      },
+      "structure": {
+        "eyebrow": "Organização",
+        "title": "Estrutura institucional",
+        "body": "Área preparada para representar a estrutura do CNC de forma clara e adaptável.",
+        "main": "Órgão principal",
+        "institutional": "Área institucional",
+        "technical": "Área técnica",
+        "communication": "Área de comunicação"
+      },
+      "work": {
+        "eyebrow": "Áreas de actuação demonstrativas",
+        "title": "O trabalho do CNC",
+        "body": "Uma plataforma para aproximar, informar e dar visibilidade às cooperativas, contribuindo para um ecossistema mais conectado e preparado para crescer.",
+        "cta": "Conhecer a instituição",
+        "items": {
+          "support": {
+            "title": "Acompanhamento",
+            "body": "Proximidade com as cooperativas e os territórios."
+          },
+          "promotion": {
+            "title": "Promoção",
+            "body": "Valorização do papel económico e social das cooperativas."
+          },
+          "capacity": {
+            "title": "Capacitação",
+            "body": "Partilha de conhecimento e fortalecimento organizacional."
+          },
+          "articulation": {
+            "title": "Articulação",
+            "body": "Pontes entre cooperativas, parceiros e instituições."
+          },
+          "information": {
+            "title": "Informação",
+            "body": "Dados acessíveis para decisões mais transparentes."
+          },
+          "development": {
+            "title": "Desenvolvimento",
+            "body": "Impulso a iniciativas com impacto sustentável."
+          }
+        }
+      },
+      "brand": {
+        "eyebrow": "CNC",
+        "title": "Conselho Nacional de Cooperativas"
+      }
     },
     "documents": {
       "eyebrow": "Biblioteca documental",

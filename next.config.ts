@@ -16,11 +16,16 @@ const imageHosts = [
     }
   });
 
+const remotePatterns: Array<{ protocol: 'http' | 'https'; hostname: string }> = [
+  { protocol: 'https', hostname: 'api.cnc.onaka.ao' },
+  ...imageHosts.map(({ protocol, hostname }) => ({ protocol, hostname })),
+];
+
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
-    remotePatterns: imageHosts.map(({ protocol, hostname }) => ({ protocol, hostname })),
+    remotePatterns,
   },
 };
 
