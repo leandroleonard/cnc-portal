@@ -172,20 +172,20 @@ export default async function HomePage({ params }: PageProps) {
 
       <section className="section news-section">
         <Container>
-          <SectionHeading eyebrow={t('newsEyebrow')} title={t('newsTitle')} body={locale === 'pt' ? 'Notícias, actividades, eventos e comunicados publicados pelo CNC.' : 'News, activities, events and announcements published by CNC.'} action={<TextLink href="/actualidade">{common('viewAll')}</TextLink>} />
+          <SectionHeading eyebrow={t('newsEyebrow')} title={t('newsTitle')} body={locale === 'pt' ? 'Notícias, actividades, eventos e comunicados.' : 'News, activities, events and announcements published by CNC.'} action={<TextLink href="/actualidade">{common('viewAll')}</TextLink>} />
           {home?.latestNews.length ? <div className="news-layout"><NewsCard item={home.latestNews[0]} locale={locale} featured readLabel={locale === 'pt' ? 'Ler notícia' : 'Read article'} /><div className="news-stack">{home.latestNews.slice(1, 4).map((item) => <NewsCard item={item} locale={locale} key={item.id} readLabel={locale === 'pt' ? 'Ler notícia' : 'Read article'} />)}</div></div> : <ResourceState variant={homeResult.error ? 'error' : 'empty'} title={homeResult.error ? common('errorTitle') : common('emptyTitle')} description={homeResult.error ? apiErrorDescription(homeResult.error, common('apiNotConfigured'), common('errorDescription')) : common('emptyDescription')} compact />}
         </Container>
       </section>
 
       <section className="section work-section">
         <Container>
-          <div className="work-layout"><div><p className="eyebrow eyebrow--gold">{t('workEyebrow')}</p><h2>{t('workTitle')}</h2><p>{t('workBody')}</p><AppLink href="/institucional" variant="light">{locale === 'pt' ? 'Conhecer a instituição' : 'About the institution'} <ArrowRight size={17} aria-hidden="true" /></AppLink></div><div className="home-institution-panel"><Image src={staticMedia.cncLogo} alt="" width={160} height={160} /><p>{locale === 'pt' ? 'Conteúdos institucionais geridos e publicados pela equipa do CNC.' : 'Institutional content managed and published by the CNC team.'}</p></div></div>
+          <div className="work-layout"><div><p className="eyebrow eyebrow--gold">{t('workEyebrow')}</p><h2>{t('workTitle')}</h2><p>{t('workBody')}</p><AppLink href="/institucional" variant="light">{locale === 'pt' ? 'Conhecer a instituição' : 'About the institution'} <ArrowRight size={17} aria-hidden="true" /></AppLink></div><div className="home-institution-panel"><Image src={staticMedia.cncLogo} alt="" width={160} height={160} /><p>{locale === 'pt' ? '' : ''}</p></div></div>
         </Container>
       </section>
 
       <section className="section section--soft">
         <Container>
-          <SectionHeading eyebrow={locale === 'pt' ? 'Centro de conteúdos' : 'Content centre'} title={t('documentsTitle')} body={locale === 'pt' ? 'Consulte os documentos e publicações disponibilizados pelo CNC.' : 'Browse documents and publications made available by CNC.'} action={<TextLink href="/documentos">{common('viewAll')}</TextLink>} />
+          <SectionHeading eyebrow={locale === 'pt' ? 'Centro de conteúdos' : 'Content centre'} title={t('documentsTitle')} body={locale === 'pt' ? 'Consulte os documentos e publicações disponibilizados.' : 'Browse documents and publications.'} action={<TextLink href="/documentos">{common('viewAll')}</TextLink>} />
           {home?.featuredDocuments.length ? <div className="document-list">{home.featuredDocuments.slice(0, 4).map((item) => <DocumentCard item={item} locale={locale} key={item.id} downloadLabel={locale === 'pt' ? 'Descarregar' : 'Download'} />)}</div> : <ResourceState variant={homeResult.error ? 'error' : 'empty'} title={homeResult.error ? common('errorTitle') : common('emptyTitle')} description={homeResult.error ? apiErrorDescription(homeResult.error, common('apiNotConfigured'), common('errorDescription')) : common('emptyDescription')} compact />}
         </Container>
       </section>

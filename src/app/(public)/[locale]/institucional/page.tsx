@@ -139,7 +139,8 @@ export default async function InstitutionalPage({ params }: PageProps) {
         {result.error ? (
           <ResourceState variant="error" title={common('errorTitle')} description={apiErrorDescription(result.error, common('apiNotConfigured'), common('errorDescription'))} />
         ) : sections.length === 0 ? (
-          <ResourceState variant="empty" title={t('empty')} description={common('emptyDescription')} />
+          // <ResourceState variant="empty" title={t('empty')} description={common('emptyDescription')} />
+          <div></div>
         ) : (
           <div className="institutional-sections">
             {sections.map((section, index) => (

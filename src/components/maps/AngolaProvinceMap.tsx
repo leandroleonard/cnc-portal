@@ -8,13 +8,13 @@ import type { Locale, Province } from '@/types/domain';
 import { staticMedia } from '@/lib/media';
 
 const mapHotspots: Array<{ code: string; x: number; y: number }> = [
-  { code: 'CAB', x: 10.5, y: 8.8 }, { code: 'ZAI', x: 20.5, y: 17.5 }, { code: 'UIG', x: 34.5, y: 23.5 },
-  { code: 'BGO', x: 21.3, y: 30.5 }, { code: 'LUA', x: 17.8, y: 33.7 }, { code: 'IEB', x: 22.5, y: 38.5 },
-  { code: 'CNO', x: 30.8, y: 33.3 }, { code: 'MAL', x: 48.3, y: 44.2 }, { code: 'LNO', x: 57.6, y: 32.6 },
-  { code: 'CUS', x: 31.2, y: 47.3 }, { code: 'LSU', x: 69.6, y: 44.1 }, { code: 'BGU', x: 21.5, y: 63.2 },
-  { code: 'HUA', x: 36.2, y: 60.4 }, { code: 'BIE', x: 45.9, y: 54.1 }, { code: 'MOX', x: 67.6, y: 63.7 },
-  { code: 'MXL', x: 87.3, y: 56.5 }, { code: 'HUI', x: 31.3, y: 72.3 }, { code: 'NAM', x: 13.5, y: 82.5 },
-  { code: 'CNN', x: 36.2, y: 86.3 }, { code: 'CUB', x: 54.1, y: 86.3 }, { code: 'CUA', x: 75.2, y: 86.6 },
+  { code: 'CABINDA', x: 10.5, y: 8.8 }, { code: 'ZAIRE', x: 20.5, y: 17.5 }, { code: 'UIGE', x: 34.5, y: 23.5 },
+  { code: 'BANGO', x: 21.3, y: 30.5 }, { code: 'LUANDA', x: 17.8, y: 33.7 }, { code: 'I-BENGO', x: 22.5, y: 38.5 },
+  { code: 'C-NORTE', x: 30.8, y: 33.3 }, { code: 'MALANJE', x: 48.3, y: 44.2 }, { code: 'L-NORTE', x: 57.6, y: 32.6 },
+  { code: 'CUS', x: 31.2, y: 47.3 }, { code: 'L-SUL', x: 69.6, y: 44.1 }, { code: 'BENGUELA', x: 21.5, y: 63.2 },
+  { code: 'HUAMBO', x: 36.2, y: 60.4 }, { code: 'BIE', x: 45.9, y: 54.1 }, { code: 'MOXICO', x: 67.6, y: 63.7 },
+  { code: 'M-LESTE', x: 87.3, y: 56.5 }, { code: 'HUILA', x: 31.3, y: 72.3 }, { code: 'NAMIBE', x: 13.5, y: 82.5 },
+  { code: 'CUNENE', x: 36.2, y: 86.3 }, { code: 'CUBANGO', x: 54.1, y: 86.3 }, { code: 'CUANDO', x: 75.2, y: 86.6 },
 ];
 
 export function AngolaProvinceMap({ provinces, selectedCode, showList = true }: { provinces: Province[]; selectedCode?: string; showList?: boolean }) {
