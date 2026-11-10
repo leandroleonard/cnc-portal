@@ -8,7 +8,7 @@ export async function loadApi<T>(loader: () => Promise<T>): Promise<LoadResult<T
   } catch (error) {
     return {
       data: null,
-      error: error instanceof Error ? error : error instanceof ApiConfigurationError ? error : new Error('Unexpected API error.'),
+      error: error instanceof Error ? error : error instanceof ApiConfigurationError ? error : new Error('Unexpected error.'),
     };
   }
 }

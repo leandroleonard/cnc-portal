@@ -97,7 +97,7 @@ function parseError(status: number, payload: unknown): ApiError {
   const detail = typeof body.detail === 'string' ? body.detail : undefined;
   return new ApiError(status, {
     code: typeof body.code === 'string' ? body.code : undefined,
-    message: typeof body.message === 'string' ? body.message : detail ?? `The API request failed (${status}).`,
+    message: typeof body.message === 'string' ? body.message : detail ?? `The request failed (${status}).`,
     errors: fieldErrors,
     requestId: typeof body.requestId === 'string' ? body.requestId : undefined,
   });
@@ -123,7 +123,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     if (error instanceof ApiConfigurationError) throw error;
     throw new ApiError(0, {
       code: 'network_error',
-      message: 'The CNC API could not be reached. Check the API URL and network connection.',
+      message: 'The CNC could not be reached. Check the URL and network connection.',
     });
   }
 

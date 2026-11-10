@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Activity, ArrowRight, Building2, FileText, Mail, Newspaper, PanelsTopLeft, Users } from 'lucide-react';
+import { ArrowRight, Building2, FileText, Mail, Newspaper, PanelsTopLeft, Users } from 'lucide-react';
 import type { DashboardSummary } from '@/types/domain';
 import { AdminPageHeader, AdminPanel } from './AdminUI';
 

@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { loginAdmin } from './auth';
+import { changeAdminPassword, loginAdmin, resendLoginCode, startLogin, verifyLoginCode } from './auth';
 import {
   adminRequest,
   AuthenticationRequiredError,
@@ -107,5 +107,63 @@ describe('in-memory admin bearer token', () => {
 
     vi.advanceTimersByTime(2_000);
     expect(getAccessToken()).toBeNull();
+  });
+});
+
+describe('email two-factor login', () => {
+  it('startLogin returns the email challenge without a token when 2FA is required', async () => {
+    mockJsonResponse({ data: { challengeId: 'ch-1', emailMasked: 'a***@cnc.ao', expiresInSeconds: 600, resendCooldownSeconds: 60 } }, 202);
+
+    const result = await startLogin({ email: 'admin@cnc.ao', password: 'secret' });
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as unknown as [string, RequestInit];
+
+    expect(url).toBe(`${API_URL}/api/auth/token`);
+    expect(init.method).toBe('POST');
+    expect(result).toEqual({
+      twoFactorRequired: true, challengeId: 'ch-1', emailMasked: 'a***@cnc.ao', expiresInSeconds: 600, resendCooldownSeconds: 60,
+    });
+  });
+
+  it('startLogin returns the token directly when 2FA is disabled', async () => {
+    mockJsonResponse({ access_token: 'issued-token', token_type: 'bearer', expires_in: 900, password_change_required: false });
+
+    const result = await startLogin({ email: 'admin@cnc.ao', password: 'secret' });
+    expect(result).toEqual({ twoFactorRequired: false, accessToken: 'issued-token', expiresInSeconds: 900, mustChangePassword: false });
+  });
+
+  it('verifyLoginCode posts the code and flags a mandatory password change', async () => {
+    mockJsonResponse({ access_token: 'restricted-token', token_type: 'bearer', expires_in: 900, scope: 'password.change', password_change_required: true });
+
+    const result = await verifyLoginCode('ch-1', '123456');
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as unknown as [string, RequestInit];
+
+    expect(url).toBe(`${API_URL}/api/auth/2fa/verify`);
+    expect(init.method).toBe('POST');
+    expect(JSON.parse(String(init.body))).toEqual({ challengeId: 'ch-1', code: '123456' });
+    expect(result).toEqual({ accessToken: 'restricted-token', expiresInSeconds: 900, mustChangePassword: true });
+  });
+
+  it('resendLoginCode requests a new code for the same challenge', async () => {
+    mockJsonResponse({ data: { challengeId: 'ch-1', emailMasked: 'a***@cnc.ao', expiresInSeconds: 600, resendCooldownSeconds: 60 } });
+
+    const result = await resendLoginCode('ch-1');
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as unknown as [string, RequestInit];
+
+    expect(url).toBe(`${API_URL}/api/auth/2fa/resend`);
+    expect(JSON.parse(String(init.body))).toEqual({ challengeId: 'ch-1' });
+    expect(result.challengeId).toBe('ch-1');
+  });
+
+  it('changeAdminPassword sends the current and new password with the bearer token', async () => {
+    setAccessToken('restricted-token');
+    mockJsonResponse({ access_token: 'full-token', token_type: 'bearer', expires_in: 900, password_change_required: false });
+
+    const result = await changeAdminPassword('OldPass2026', 'NewPass2026');
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as unknown as [string, RequestInit];
+
+    expect(url).toBe(`${API_URL}/api/auth/password/change`);
+    expect(new Headers(init.headers).get('Authorization')).toBe('Bearer restricted-token');
+    expect(JSON.parse(String(init.body))).toEqual({ current_password: 'OldPass2026', password: 'NewPass2026', password_confirmation: 'NewPass2026' });
+    expect(result).toEqual({ accessToken: 'full-token', expiresInSeconds: 900, mustChangePassword: false });
   });
 });

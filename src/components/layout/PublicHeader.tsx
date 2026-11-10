@@ -72,7 +72,7 @@ export function PublicHeader() {
       router.replace({ pathname: '/actualidade/[slug]', params: { slug: params.slug } }, { locale: nextLocale });
       return;
     }
-    const staticPathnames = ['/', '/cooperativas', '/actualidade', '/institucional', '/documentos', '/estatisticas', '/contactos', '/pesquisa'] as const;
+    const staticPathnames = ['/', '/cooperativas', '/actualidade', '/institucional', '/documentos', '/contactos', '/pesquisa'] as const;
     const staticPath = staticPathnames.find((item) => item === pathname) ?? '/';
     router.replace(staticPath, { locale: nextLocale });
   }
@@ -82,7 +82,6 @@ export function PublicHeader() {
       <div className="utility-bar">
         <Container className="utility-bar__inner">
           <span>{brandT('portal')}</span>
-          <Link href="/estatisticas"><BarChart3 size={14} aria-hidden="true" /> {t('statistics')}</Link>
         </Container>
       </div>
       <header className="site-header">

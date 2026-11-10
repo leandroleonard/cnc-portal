@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import Image from 'next/image';
-import { ShieldCheck } from 'lucide-react';
 import { AdminLoginForm } from '@/components/auth/AdminLoginForm';
 import { staticMedia } from '@/lib/media';
 

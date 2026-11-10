@@ -2,7 +2,7 @@
 
 import { useState, type FormEvent, type ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Save, Trash2 } from 'lucide-react';
+import { CheckCircle2, Plus, RotateCcw, Save, Trash2, XCircle } from 'lucide-react';
 import type {
   Activity, AdminCooperativeRecord, AdminDocumentCategory, AdminDocumentRecord, AdminHeroSlideRecord, AdminNewsCategory, AdminNewsRecord,
   CooperativeInput, DocumentInput, HeroSlideInput, HeroSlideTranslationInput, InstitutionalSectionInput,
@@ -10,11 +10,18 @@ import type {
 } from '@/types/domain';
 import { createCooperative, createDocument, createHeroSlide, createNews, updateCooperative, updateDocument, updateHeroSlide, updateNews } from '@/lib/api/admin';
 import { ApiError } from '@/lib/api/client';
+import { reopenCooperative, reviewCooperative } from '@/lib/api/moderation';
+import { hasPermission } from '@/lib/utils/permissions';
+import { useAdminUser } from './AdminShell';
+import { ReviewModal, type ReviewAction } from './ReviewModal';
 import { slugify } from '@/lib/utils/format';
+import { normalizeCooperativeInitial } from '@/lib/utils/cooperative-form';
 import { Button } from '@/components/ui/primitives';
 import { FormFeedback } from './AdminUI';
 import { UploadField } from './UploadField';
 import { StructuredContentEditor } from './StructuredContentEditor';
+import { CooperativeSurveyFields } from './CooperativeSurveyFields';
+import type { CooperativeSurveyData } from '@/types/cnc';
 
 function FormSection({ title, description, children }: { title: string; description?: string; children: ReactNode }) {
   return <section className="admin-form-section"><header><div><h2>{title}</h2>{description && <p>{description}</p>}</div></header>{children}</section>;
@@ -89,13 +96,46 @@ export function HeroSlideEditor({ initial }: { initial: AdminHeroSlideRecord | n
   </form>;
 }
 
-function blankCooperativeInput(): CooperativeInput {
-  return { slug: '', translations: { pt: { name: '', summary: '', description: '' }, en: { name: '', summary: '', description: '' } }, provinceId: '', municipalityId: null, commune: '', address: '', activityIds: [], type: 'production', status: 'active', registrationNumber: '', foundedYear: null, memberCount: null, logoId: null, coverImageId: null, galleryIds: [], contacts: { email: '', phone: '', website: '' }, location: null };
+
+function CooperativeReviewPanel({ id, status }: { id: string; status: string }) {
+  const router = useRouter();
+  const admin = useAdminUser();
+  const [action, setAction] = useState<ReviewAction | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  if (!admin || !hasPermission(admin, 'cooperatives', 'review')) return null;
+
+  async function confirm(text: string) {
+    if (!action) return;
+    setBusy(true); setError('');
+    try {
+      if (action === 'reopen') await reopenCooperative(id, text);
+      else await reviewCooperative(id, action === 'approve' ? { status: 'active' } : { status: 'rejected', rejection_reason: text });
+      setMessage(action === 'approve' ? 'Cooperativa aprovada.' : action === 'reject' ? 'Cooperativa rejeitada.' : 'Edição reaberta para o cadastrador.');
+      setAction(null);
+      router.refresh();
+    } catch (cause) {
+      setError(cause instanceof ApiError ? cause.message : 'Não foi possível concluir a acção de moderação.');
+    } finally { setBusy(false); }
+  }
+
+  return <FormSection title="Moderação" description="Aprovação de fichas submetidas por cadastradores.">
+    {message && <p className="admin-form-success">{message}</p>}
+    {error && <p className="admin-form-error">{error}</p>}
+    <div className="admin-form-actions">
+      {status !== 'draft' && <button type="button" className="admin-button-secondary" onClick={() => setAction('reopen')}><RotateCcw size={15} /> Reabrir edição</button>}
+      {status === 'pending_review' && <button type="button" className="admin-button-secondary" onClick={() => setAction('reject')}><XCircle size={15} /> Rejeitar</button>}
+      {status === 'pending_review' && <Button type="button" onClick={() => setAction('approve')}><CheckCircle2 size={15} /> Aprovar</Button>}
+    </div>
+    <ReviewModal action={action} recordLabel={id} busy={busy} error={error} onCancel={() => setAction(null)} onConfirm={confirm} />
+  </FormSection>;
 }
 
 export function CooperativeEditor({ initial, provinces, activities }: { initial: AdminCooperativeRecord | null; provinces: Array<{ id: string; code: string; name: string; municipalities: Array<{ id: string; name: string }> }>; activities: Activity[] }) {
   const router = useRouter();
-  const [form, setForm] = useState<CooperativeInput>(() => initial ? { slug: initial.slug, translations: initial.translations, provinceId: initial.provinceId, municipalityId: initial.municipalityId, commune: initial.commune, address: initial.address, activityIds: initial.activityIds, type: initial.type, status: initial.status, registrationNumber: initial.registrationNumber, foundedYear: initial.foundedYear, memberCount: initial.memberCount, logoId: initial.logo?.id ?? initial.logoId, coverImageId: initial.coverImage?.id ?? initial.coverImageId, galleryIds: initial.gallery?.map((item) => item.id) ?? initial.galleryIds, contacts: initial.contacts, location: initial.location } : blankCooperativeInput());
+  const [form, setForm] = useState<CooperativeInput>(() => normalizeCooperativeInitial(initial));
+  const [survey, setSurvey] = useState<Partial<CooperativeSurveyData>>(() => (initial?.survey as Partial<CooperativeSurveyData> | null) ?? {});
   const [logo, setLogo] = useState<Media | null>(initial?.logo ?? null);
   const [cover, setCover] = useState<Media | null>(initial?.coverImage ?? null);
   const [gallery, setGallery] = useState<Array<Media | null>>((initial?.gallery ?? []).slice(0, 4));
@@ -113,7 +153,7 @@ export function CooperativeEditor({ initial, provinces, activities }: { initial:
     event.preventDefault(); setError(''); setSuccess('');
     if (!form.translations.pt.name.trim() || !form.translations.en.name.trim()) { setError('O nome é obrigatório em Português e English.'); return; }
     if (!form.provinceId) { setError('Seleccione a província da cooperativa.'); return; }
-    const payload: CooperativeInput = { ...form, slug: form.slug.trim() || slugify(form.translations.pt.name), logoId: logo?.id ?? null, coverImageId: cover?.id ?? null, galleryIds: gallery.filter((item): item is Media => item !== null).map((item) => item.id) };
+    const payload: CooperativeInput = { ...form, slug: form.slug.trim() || slugify(form.translations.pt.name), logoId: logo?.id ?? null, coverImageId: cover?.id ?? null, galleryIds: gallery.filter((item): item is Media => item !== null).map((item) => item.id), survey };
     setBusy(true);
     try { if (initial) await updateCooperative(initial.id, payload); else await createCooperative(payload); setSuccess('Cooperativa guardada com sucesso.'); router.replace('/admin/cooperativas'); router.refresh(); }
     catch (cause) { setError(cause instanceof ApiError ? cause.message : 'Não foi possível guardar a cooperativa.'); }
@@ -123,11 +163,12 @@ export function CooperativeEditor({ initial, provinces, activities }: { initial:
   return <form onSubmit={submit} className="admin-form-layout">
     <div className="admin-form-main">
       <FormSection title="Conteúdo bilingue" description=""><div className="translation-grid">{(['pt', 'en'] as const).map((locale) => <TranslationCard key={locale} locale={locale}><Field label={locale === 'pt' ? 'Nome' : 'Name'}><input required value={form.translations[locale].name} onChange={(event) => updateTranslation(locale, 'name', event.target.value)} /></Field><Field label={locale === 'pt' ? 'Resumo' : 'Summary'}><textarea value={form.translations[locale].summary ?? ''} onChange={(event) => updateTranslation(locale, 'summary', event.target.value)} /></Field><Field label={locale === 'pt' ? 'Descrição' : 'Description'}><textarea value={form.translations[locale].description ?? ''} onChange={(event) => updateTranslation(locale, 'description', event.target.value)} /></Field></TranslationCard>)}</div></FormSection>
-      <FormSection title="Localização e actividade"><div className="admin-form-grid"><Field label="Slug"><input value={form.slug} onChange={(event) => updateTop('slug', event.target.value)} placeholder="gerado-a-partir-do-nome" /></Field><Field label="Província"><select value={form.provinceId} onChange={(event) => { updateTop('provinceId', event.target.value); updateTop('municipalityId', null); }} required><option value="">Seleccione</option>{provinces.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}</select></Field><Field label="Município"><select value={form.municipalityId ?? ''} onChange={(event) => updateTop('municipalityId', event.target.value || null)}><option value="">Seleccione</option>{selectedProvince?.municipalities.map((municipality) => <option key={municipality.id} value={municipality.id}>{municipality.name}</option>)}</select></Field><Field label="Comuna"><input value={form.commune ?? ''} onChange={(event) => updateTop('commune', event.target.value)} /></Field><Field label="Endereço" full><input value={form.address ?? ''} onChange={(event) => updateTop('address', event.target.value)} /></Field></div><div className="admin-activity-picker"><span className="admin-field-label">Actividades</span><div>{activities.map((activity) => <label className="admin-checkbox" key={activity.id}><input type="checkbox" checked={form.activityIds.includes(activity.id)} onChange={(event) => updateTop('activityIds', event.target.checked ? [...form.activityIds, activity.id] : form.activityIds.filter((id) => id !== activity.id))} />{activity.name}</label>)}</div></div></FormSection>
+      <FormSection title="Localização e actividade"><div className="admin-form-grid"><Field label="Slug"><input value={form.slug} onChange={(event) => updateTop('slug', event.target.value)} placeholder="gerado-a-partir-do-nome" /></Field><Field label="Província"><select value={form.provinceId} onChange={(event) => { updateTop('provinceId', event.target.value); updateTop('municipalityId', null); }} required><option value="">Seleccione</option>{provinces.map((province) => <option key={province.id} value={province.id}>{province.name}</option>)}</select></Field><Field label="Município"><select value={form.municipalityId ?? ''} onChange={(event) => updateTop('municipalityId', event.target.value || null)}><option value="">Seleccione</option>{selectedProvince?.municipalities.map((municipality) => <option key={municipality.id} value={municipality.id}>{municipality.name}</option>)}</select></Field><Field label="Comuna"><input value={form.commune ?? ''} onChange={(event) => updateTop('commune', event.target.value)} /></Field><Field label="Bairro"><input value={form.neighborhood ?? ''} onChange={(event) => updateTop('neighborhood', event.target.value)} /></Field><Field label="Endereço" full><input value={form.address ?? ''} onChange={(event) => updateTop('address', event.target.value)} /></Field></div><div className="admin-activity-picker"><span className="admin-field-label">Actividades</span><div>{activities.map((activity) => <label className="admin-checkbox" key={activity.id}><input type="checkbox" checked={form.activityIds.includes(activity.id)} onChange={(event) => updateTop('activityIds', event.target.checked ? [...form.activityIds, activity.id] : form.activityIds.filter((id) => id !== activity.id))} />{activity.name}</label>)}</div></div></FormSection>
       <FormSection title="Dados administrativos"><div className="admin-form-grid"><Field label="Tipo"><select value={form.type ?? 'other'} onChange={(event) => updateTop('type', event.target.value as CooperativeInput['type'])}><option value="production">Produção</option><option value="services">Serviços</option><option value="consumption">Consumo</option><option value="credit">Crédito</option><option value="mixed">Mista</option><option value="other">Outro</option></select></Field><Field label="Estado"><select value={form.status} onChange={(event) => updateTop('status', event.target.value as CooperativeInput['status'])}><option value="active">Activa</option><option value="pending_review">Em validação</option><option value="inactive">Inactiva</option></select></Field><Field label="Número de registo"><input value={form.registrationNumber ?? ''} onChange={(event) => updateTop('registrationNumber', event.target.value)} /></Field><Field label="Ano de constituição"><input type="number" min="1900" max="2100" value={form.foundedYear ?? ''} onChange={(event) => updateTop('foundedYear', event.target.value ? Number(event.target.value) : null)} /></Field><Field label="Número de membros"><input type="number" min="0" value={form.memberCount ?? ''} onChange={(event) => updateTop('memberCount', event.target.value ? Number(event.target.value) : null)} /></Field></div></FormSection>
       <FormSection title="Contactos e localização geográfica"><div className="admin-form-grid"><Field label="Email"><input type="email" value={form.contacts?.email ?? ''} onChange={(event) => updateContact('email', event.target.value)} /></Field><Field label="Telefone"><input type="tel" value={form.contacts?.phone ?? ''} onChange={(event) => updateContact('phone', event.target.value)} /></Field><Field label="Website"><input type="url" value={form.contacts?.website ?? ''} onChange={(event) => updateContact('website', event.target.value)} /></Field><Field label="Latitude"><input type="number" step="any" value={form.location?.latitude ?? ''} onChange={(event) => updateLocation('latitude', event.target.value)} /></Field><Field label="Longitude"><input type="number" step="any" value={form.location?.longitude ?? ''} onChange={(event) => updateLocation('longitude', event.target.value)} /></Field></div></FormSection>
+      <CooperativeSurveyFields value={survey} onChange={setSurvey} provinces={provinces} />
     </div>
-    <aside className="admin-form-aside"><FormSection title="Identidade visual"><UploadField label="Logótipo" value={logo} onChange={(media) => setLogo(media)} imageOnly accept="image/jpeg,image/png,image/webp,image/svg+xml" maxSizeMb={8} /><UploadField label="Imagem de capa" value={cover} onChange={(media) => setCover(media)} imageOnly accept="image/jpeg,image/png,image/webp" maxSizeMb={12} /></FormSection><FormSection title="Galeria de imagens" description="Até quatro imagens. ">{Array.from({ length: Math.max(2, gallery.length + 1) }).slice(0, 4).map((_, index) => <UploadField key={index} label={`Imagem ${index + 1}`} value={gallery[index] ?? null} onChange={(media) => setGallery((current) => { const next = [...current]; next[index] = media; return next; })} imageOnly accept="image/jpeg,image/png,image/webp" maxSizeMb={12} />)}</FormSection><FormSection title="Estado"><label className="admin-checkbox"><input type="checkbox" checked={form.status === 'active'} onChange={(event) => updateTop('status', event.target.checked ? 'active' : 'inactive')} /> Publicada e visível no directório</label><p className="admin-form-hint">A validação definitiva de registos é responsabilidade do usuário.</p></FormSection></aside>
+    <aside className="admin-form-aside">{initial && <CooperativeReviewPanel id={initial.id} status={initial.status} />}<FormSection title="Identidade visual"><UploadField label="Logótipo" value={logo} onChange={(media) => setLogo(media)} imageOnly accept="image/jpeg,image/png,image/webp,image/svg+xml" maxSizeMb={8} /><UploadField label="Imagem de capa" value={cover} onChange={(media) => setCover(media)} imageOnly accept="image/jpeg,image/png,image/webp" maxSizeMb={12} /></FormSection><FormSection title="Galeria de imagens" description="Até quatro imagens. ">{Array.from({ length: Math.max(2, gallery.length + 1) }).slice(0, 4).map((_, index) => <UploadField key={index} label={`Imagem ${index + 1}`} value={gallery[index] ?? null} onChange={(media) => setGallery((current) => { const next = [...current]; next[index] = media; return next; })} imageOnly accept="image/jpeg,image/png,image/webp" maxSizeMb={12} />)}</FormSection><FormSection title="Estado"><label className="admin-checkbox"><input type="checkbox" checked={form.status === 'active'} onChange={(event) => updateTop('status', event.target.checked ? 'active' : 'inactive')} /> Publicada e visível no directório</label><p className="admin-form-hint">A validação definitiva de registos é responsabilidade do usuário.</p></FormSection></aside>
     <div className="admin-form-main admin-form-submit-area"><FormFeedback error={error} success={success} /><SaveActions busy={busy} onCancel={() => router.back()} submitLabel={initial ? 'Guardar cooperativa' : 'Criar cooperativa'} /></div>
   </form>;
 }

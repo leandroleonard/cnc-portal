@@ -5,8 +5,8 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import {
-  Activity, Bell, Building2, ChartNoAxesCombined, ChevronDown, FileText, Globe2,
-  LayoutDashboard, LogOut, Mail, Menu, Newspaper, PanelsTopLeft, Settings,
+  Activity, Bell, Building2, ChartNoAxesCombined, ChevronDown, ClipboardList, FileText, Globe2,
+  LayoutDashboard, LogOut, Mail, Menu, Newspaper, PanelsTopLeft, Settings, ShieldCheck, UserCog,
   Share2, Users, X, Image as ImageIcon,
 } from 'lucide-react';
 import type { AdminUser } from '@/types/domain';
@@ -22,12 +22,14 @@ export function useAdminUser() {
 
 const navItems = [
   { href: '/admin', label: 'Dashboard', permission: 'dashboard.view', Icon: LayoutDashboard, exact: true },
+  { href: '/admin/registos', label: 'Registos', permission: 'registrations.view', Icon: ClipboardList },
+  { href: '/admin/moderacao', label: 'Moderação', permission: 'cooperatives.review', Icon: ShieldCheck },
+  { href: '/admin/utilizadores', label: 'Utilizadores', permission: 'users.view', Icon: UserCog },
   { href: '/admin/hero', label: 'Hero / Banners', permission: 'hero-slides.view', Icon: PanelsTopLeft },
-  { href: '/admin/cooperativas', label: 'Cooperativas', permission: 'cooperatives.view', Icon: Building2 },
+  // { href: '/admin/cooperativas', label: 'Cooperativas', permission: 'cooperatives.view', Icon: Building2 },
   { href: '/admin/noticias', label: 'Actualidade', permission: 'news.view', Icon: Newspaper },
   { href: '/admin/documentos', label: 'Documentos', permission: 'documents.view', Icon: FileText },
   { href: '/admin/institucional', label: 'Institucional', permission: 'institutional.view', Icon: Activity },
-  { href: '/admin/estatisticas', label: 'Estatísticas', permission: 'statistics.view', Icon: ChartNoAxesCombined },
   { href: '/admin/media', label: 'Media', permission: 'media.view', Icon: ImageIcon },
   { href: '/admin/redes-sociais', label: 'Redes sociais', permission: 'social-links.view', Icon: Share2 },
   { href: '/admin/newsletter', label: 'Newsletter', permission: 'newsletter.view', Icon: Mail },
@@ -40,7 +42,10 @@ export function AdminShell({ children, user }: { children: React.ReactNode; user
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
-  const visible = navItems.filter((item) => hasPermission(user, item.permission.slice(0, item.permission.lastIndexOf('.')), 'view'));
+  const visible = navItems.filter((item) => {
+    const split = item.permission.lastIndexOf('.');
+    return hasPermission(user, item.permission.slice(0, split), item.permission.slice(split + 1) as Parameters<typeof hasPermission>[2]);
+  });
 
   async function signOut() {
     setLoggingOut(true);

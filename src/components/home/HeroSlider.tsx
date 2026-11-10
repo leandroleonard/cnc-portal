@@ -38,7 +38,6 @@ export function HeroSlider({ slides, locale }: { slides: HeroSlide[]; locale: Lo
   const activeSlide = normalizedSlides[Math.min(current, normalizedSlides.length - 1)];
   const slideCount = normalizedSlides.length;
   const imageSrc = mediaUrl(activeSlide.image, staticMedia.heroFallback) ?? staticMedia.heroFallback;
-  const logoSrc = mediaUrl(activeSlide.logo, staticMedia.cncLogo);
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');

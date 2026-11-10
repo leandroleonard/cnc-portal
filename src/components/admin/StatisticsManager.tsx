@@ -46,7 +46,7 @@ export function StatisticsManager({ initial, provinces, activities }: { initial:
   }
 
   return <>
-    <div className="admin-stat-toolbar"><div><p>Os valores e agregados são calculados e validados pela API.</p></div><Button onClick={() => edit()}><Plus size={16} /> Novo indicador</Button></div>
+    <div className="admin-stat-toolbar"><div></div><Button onClick={() => edit()}><Plus size={16} /> Novo indicador</Button></div>
     {success && <FormFeedback success={success} />}{error && !form && <FormFeedback error={error} />}
     {form && <AdminPanel title={form.id ? 'Editar indicador' : 'Criar indicador'} action={<button type="button" className="admin-icon-button" aria-label="Fechar formulário" onClick={() => setForm(null)}><X size={17} /></button>}>
       <form className="admin-stat-form" onSubmit={submit}>

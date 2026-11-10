@@ -3,7 +3,7 @@
 import { useCallback } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Pencil } from 'lucide-react';
+import { Pencil, ShieldCheck } from 'lucide-react';
 import type { AdminListQuery } from '@/types/api';
 import type {
   AdminCooperativeRecord,
@@ -44,6 +44,8 @@ import {
   listSocialLinks,
 } from '@/lib/api/admin';
 import { clampPage, firstParam } from '@/lib/api/query';
+import { hasPermission } from '@/lib/utils/permissions';
+import { useAdminUser } from '@/components/admin/AdminShell';
 import { formatDate, formatFileSize } from '@/lib/utils/format';
 import { AdminDashboard } from '@/components/admin/AdminDashboard';
 import { HeroSlidesTable } from '@/components/admin/HeroSlidesTable';
@@ -88,12 +90,14 @@ export function AdminDashboardPageClient() {
 }
 
 export function AdminCooperativesPageClient() {
+  const admin = useAdminUser();
+  const canReview = admin ? hasPermission(admin, 'cooperatives', 'review') : false;
   const query = useListQuery(20, 'updatedAt');
   const key = queryKey(query);
   const load = useCallback(() => listAdminCooperatives({ search: query.search, status: query.status, page: query.page, perPage: query.perPage, sort: query.sort, direction: query.direction }), [query.search, query.status, query.page, query.perPage, query.sort, query.direction]);
   const { loading, data, error } = useAdminResource(key, load);
   return <>
-    <AdminPageHeader title="Cooperativas" description="Cadastro central das cooperativas nacionais. O CNC gere e valida todos os perfis." action={<AdminCreateLink href="/admin/cooperativas/novo">Adicionar cooperativa</AdminCreateLink>} />
+    <AdminPageHeader title="Cooperativas" description="Cadastro central das cooperativas nacionais. O CNC gere e valida todos os perfis." action={<div className="admin-table-actions">{canReview && <Link className="admin-button-secondary" href="/admin/moderacao"><ShieldCheck size={15} /> Moderação</Link>}<AdminCreateLink href="/admin/cooperativas/novo">Adicionar cooperativa</AdminCreateLink></div>} />
     {loading ? <InlineLoading /> : error ? <AdminApiState error={error} /> : <AdminPanel title="Directório de cooperativas" description="Pesquisa e gestão.">
       <div className="admin-list-toolbar"><AdminSearch initialValue={query.search} placeholder="Pesquisar nome, província ou registo…" /><form method="get"><input type="hidden" name="search" value={query.search ?? ''} /><label className="sr-only" htmlFor="cooperative-status">Estado</label><select className="admin-filter-select" id="cooperative-status" name="status" defaultValue={query.status ?? ''} onChange={(event) => event.currentTarget.form?.requestSubmit()}><option value="">Todos os estados</option><option value="active">Activa</option><option value="pending_review">Em validação</option><option value="inactive">Inactiva</option></select></form></div>
       {data ? <><AdminTable<CooperativeSummary> rows={data.data} getKey={(row) => row.id} emptyTitle="Sem cooperativas cadastradas" emptyDescription="Os registos de cooperativas serão listados aqui após criação através do CMS." columns={[

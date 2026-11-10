@@ -18,4 +18,10 @@ describe('admin visual permissions', () => {
   it('recognizes an explicit full-access grant', () => {
     expect(hasPermission({ ...user, permissions: ['*'] }, 'settings', 'manage')).toBe(true);
   });
+
+  it('grants the admin profile full panel access even when the permission list is stale', () => {
+    const admin: AdminUser = { ...user, role: 'admin', permissions: [] };
+    expect(hasPermission(admin, 'users', 'view')).toBe(true);
+    expect(hasPermission(admin, 'cooperatives', 'review')).toBe(true);
+  });
 });

@@ -100,6 +100,7 @@ export default async function HomePage({ params }: PageProps) {
     loadApi(() => getActivities(locale)),
   ]);
   const home = homeResult.data;
+  console.log('home', home);
   const provinces = provincesResult.data ?? [];
   const activities = home?.activities?.length ? home.activities : activitiesResult.data ?? [];
   const t = await getTranslations({ locale, namespace: 'home' });
@@ -195,4 +196,3 @@ export default async function HomePage({ params }: PageProps) {
     </>
   );
 }
-

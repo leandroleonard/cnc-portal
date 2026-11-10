@@ -8,8 +8,8 @@ import type { Paginated } from '@/types/domain';
 export const dynamic = 'force-dynamic';
 
 const staticPaths = {
-  pt: ['', 'cooperativas', 'actualidade', 'institucional', 'documentos', 'estatisticas', 'contactos', 'pesquisa'],
-  en: ['', 'cooperatives', 'news', 'about', 'documents', 'statistics', 'contact', 'search'],
+  pt: ['', 'cooperativas', 'actualidade', 'institucional', 'documentos', 'contactos', 'pesquisa'],
+  en: ['', 'cooperatives', 'news', 'about', 'documents', 'contact', 'search'],
 } as const;
 const maxDynamicEntries = 49_000;
 const sitemapPageSize = 100;

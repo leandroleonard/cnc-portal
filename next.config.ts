@@ -21,11 +21,12 @@ const remotePatterns: Array<{ protocol: 'http' | 'https'; hostname: string }> = 
   ...imageHosts.map(({ protocol, hostname }) => ({ protocol, hostname })),
 ];
 
-const nextConfig = {
+export const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   images: {
     remotePatterns,
+    dangerouslyAllowLocalIP: true,
   },
 };
 

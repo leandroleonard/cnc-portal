@@ -1,3 +1,5 @@
+import type { CooperativeSurveyData } from './cnc';
+
 export type Locale = 'pt' | 'en';
 export type Localized<T> = Record<Locale, T>;
 
@@ -74,7 +76,9 @@ export type DocumentItem = {
 
 export type Cooperative = CooperativeSummary & {
   commune?: string | null;
+  neighborhood?: string | null;
   address?: string | null;
+  survey?: Partial<CooperativeSurveyData> | null;
   description?: string | null;
   type?: CooperativeType | string | null;
   registrationNumber?: string | null;
@@ -196,7 +200,7 @@ export type ContactPayload = { name: string; email: string; phone?: string; subj
 export type NewsletterSubscription = { id: string; email: string; status: 'active' | 'unsubscribed' | 'pending'; subscribedAt: string };
 export type ContactMessage = ContactPayload & { id: string; status: 'new' | 'read' | 'responded' | 'archived'; receivedAt: string; updatedAt?: string | null };
 
-export type AdminUser = { id: string; name: string; email: string; role: string; permissions: string[]; avatar?: Media | null };
+export type AdminUser = { id: string; name: string; email: string; role: string; permissions: string[]; avatar?: Media | null; mustChangePassword?: boolean };
 export type DashboardSummary = {
   totals: { cooperatives: number; publishedNews: number; documents: number; activeHeroSlides: number; newsletterSubscribers: number; pendingContactMessages: number };
   recentNews: NewsArticleSummary[];
@@ -236,7 +240,9 @@ export type CooperativeInput = {
   provinceId: string;
   municipalityId?: string | null;
   commune?: string | null;
+  neighborhood?: string | null;
   address?: string | null;
+  survey?: Partial<CooperativeSurveyData> | null;
   activityIds: string[];
   type?: CooperativeType | null;
   status: CooperativeStatus;

@@ -1,7 +1,7 @@
 import type { Media } from '@/types/domain';
 
 export const staticMedia = {
-  cncLogo: '/images/cnc-logo.jpeg',
+  cncLogo: '/images/logo.png',
   heroFallback: '/images/cnc-hero-angola.jpg',
   angolaProvinces: '/images/angola-provinces-21.webp',
 } as const;

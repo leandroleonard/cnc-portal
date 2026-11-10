@@ -51,7 +51,6 @@ export async function PublicFooter({ locale, settings }: { locale: Locale; setti
           <div>
             <h3>{t('usefulLinks')}</h3>
             <Link href="/documentos">{nav('documents')}</Link>
-            <Link href="/estatisticas">{nav('statistics')}</Link>
             <Link href={{ pathname: '/cooperativas', query: { view: 'mapa' } }}>{locale === 'pt' ? 'Mapa de cooperativas' : 'Cooperative map'}</Link>
           </div>
           <div>
